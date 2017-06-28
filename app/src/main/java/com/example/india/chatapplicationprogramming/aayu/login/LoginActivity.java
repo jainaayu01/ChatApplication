@@ -18,11 +18,8 @@ import com.example.india.chatapplicationprogramming.R;
 /**
  * Created by india on 6/26/2017.
  */
-public class LoginActivity extends AppCompatActivity {
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "test1@gmail:TEST1", "test2:TEST2"
-    };
-    private UserLoginTask mAuthTask = null;
+public class LoginActivity extends AppCompatActivity implements LoginView {
+    private LoginPresenter loginPresenter;
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgessView;
@@ -43,49 +40,19 @@ public class LoginActivity extends AppCompatActivity {
         });
         mLoginFormView = findViewById(R.id.login_form);
         mProgessView = findViewById(R.id.login_progress);
-
+          loginPresenter = new LoginPresenterImpl(this);
     }
     protected void attemptLogin(){
-        if(mAuthTask!=null)
-            return;
+
         mEmailView.setError(null);
         mPasswordView.setError(null);
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
-        boolean cancel = false;
-        View focusView = null;
-        if(TextUtils.isEmpty(password) && !isPasswordValid(password)){
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
-            cancel = true;
-        }
-        if(TextUtils.isEmpty(email)){
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel=true;
-        }
-        else if(!isEmailValid(email)){
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel= true;
-        }
-        if(cancel){
-            focusView.requestFocus();
-        }
-        else{
-            showProgress(true);
-            mAuthTask = new UserLoginTask(email,password);
-            mAuthTask.execute((Void)null);
-        }
+       loginPresenter.validateCredentials(email,password);
 
     }
-    private boolean isEmailValid(String email){
-        return email.contains("@");
-    }
-    private boolean isPasswordValid(String password){
-        return password.length()>4;
-    }
 
+  @Override
     public void showProgress(final boolean show) {
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
         mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
@@ -104,50 +71,22 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-        private final String mEmail;
-        private final String mPassword;
-
-        UserLoginTask(String mEmail, String mPassword) {
-            this.mEmail = mEmail;
-            this.mPassword = mPassword;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            try {
-                Thread.sleep(2000);
-
-            } catch (InterruptedException exc) {
-                return false;
-
-            }
-            for (String credentials : DUMMY_CREDENTIALS) {
-                String[] pieces = credentials.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    return pieces[1].equals(mPassword);
-                }
-            }
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-             showProgress(false);
-            if(success){
-                Toast.makeText(LoginActivity.this,"Success",Toast.LENGTH_SHORT).show();
-            }
-            else{
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
+    @Override
+    public void setUsernameError(int messageResId) {
+      mEmailView.setError(getString(messageResId));
+        mEmailView.requestFocus();
     }
+
+    @Override
+    public void setPasswordError(int messageResId) {
+            mPasswordView.setError(getString(messageResId));
+        mPasswordView.requestFocus();
+    }
+
+    @Override
+    public void successAction() {
+   Toast.makeText(this,"Success",Toast.LENGTH_LONG).show();
+    }
+
+
 }
